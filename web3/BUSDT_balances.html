@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>BUSDT balance</title>
+  <script src="./js/web3.min.js"></script>
+  <script src="./js/token_abi.js"></script>
+  <style type="text/css">
+    .block1 { 
+     width: 200px; 
+     padding: 5px;
+     padding-right: 5px; 
+     border: solid 1px black; 
+     float: right;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<h3>BUSDT in SoyFinance liquidity</h3>
+BUSDT - CLO: <span id="bc"></span>K BUSDT<br>
+SOY - BUSDT: <span id="sb"></span>K BUSDT<br>
+<br>
+<b>Total BUSDT: <span id="total"></span>K BUSDT</b><br>
+
+<h3>BUSDT on Bridges</h3>
+ETH: <span id="eth"></span> BUSDT<br>
+BSC: <span id="bsc"></span> BUSDT<br>
+<br>
+CLO: <span id="clo"></span> BUSDT<br>
+<br>
+BTTC: <span id="bttc"></span> BUSDT<br>
+ETC: <span id="etc"></span> BUSDT<br>
+<br>
+<b>Balance: <span id="balance"></span> BUSDT</b><br>
+
+
+<script>
+
+const bridge_address = "0x9a1fc8C0369D49f3040bF49c1490E7006657ea56";
+
+const busdt_address = {
+  "820": "0xbf6c50889d3a620eb42C0F188b65aDe90De958c4",  // BUSDT CLO main net
+  "56" : "0x55d398326f99059fF775485246999027B3197955",  // USDT BSC main net
+  "1" : "0xdAC17F958D2ee523a2206206994597C13D831ec7",   // USDT ETH main net
+  "61" : "0xCC48CD0B4a6f50b8f8bf0f9b80eD7881fA547968",  // wrapped BUSDT ETC main net
+  "199": "0xCC78D0A86B0c0a3b32DEBd773Ec815130F9527CF",  // wrapped BUSDT BTTC main net
+};
+
+const pools_address = [
+  "0xB852AD87329986EaC6e991954fe329231D1E4De1", // BUSDT - CLO
+  "0x23288A0a9c7ac3bEC523aeED146E4F0bf04d6309"  // SOY - BUSDT
+];
+
+const providers = {
+    "20729" : "https://testnet-rpc.callisto.network", // CLO test net
+    "820" : "https://rpc.callisto.network/", // CLO main net
+    "97" : "https://data-seed-prebsc-1-s1.binance.org:8545/",  // BSC test net
+    "56" : "https://bsc-dataseed.binance.org/",  // BSC main net
+    "1" : "https://nodes.mewapi.io/rpc/eth",   // ETH main net
+    "61" : "https://etc.etcdesktop.com", // ETC main net
+    "199": "https://rpc.bt.io/",  // BTTC main net
+    "250" : "https://rpcapi.fantom.network/", // Fantom Opera mainnet
+    "137" : "https://polygon-rpc.com/", // Polygon Mainnet
+    "43114" : "https://api.avax.network/ext/bc/C/rpc", // Avalanche Mainnet
+    "1313161554" : "https://mainnet.aurora.dev", // Aurora mainnet
+    "5" : "https://goerli.infura.io/v3/", // ETH Goerli testnet
+};
+
+const mintedToBridge = 1341001; // initially minted to bridge
+
+async function getPoolsBalance() 
+{
+  const chain = 820; // CLO chain
+  const web3 = new Web3(providers[chain]);
+  const busdt = new web3.eth.Contract(token_abi, busdt_address[chain]);
+  const bc = await balanceOf(pools_address[0], chain); // BUSDT - CLO
+  const sb = await balanceOf(pools_address[1], chain); // SOY - BUSDT
+
+  document.getElementById("bc").innerHTML = bc/1000;//.toFixed(2);
+  document.getElementById("sb").innerHTML = sb/1000;
+  document.getElementById("total").innerHTML =(bc+sb)/1000;
+}
+
+async function getBridgeBalance() 
+{
+  const eth = await balanceOf(bridge_address, 1);
+  const bsc = await balanceOf(bridge_address, 56);
+  const clo = await balanceOf(bridge_address, 820);
+  const etc = await balanceOf(busdt_address[61], 61);
+  const bttc = await balanceOf(busdt_address[199], 199);
+  document.getElementById("eth").innerHTML = numberWithCommas(eth);
+  document.getElementById("bsc").innerHTML = numberWithCommas(bsc);
+  document.getElementById("clo").innerHTML = numberWithCommas(clo);
+  document.getElementById("etc").innerHTML = numberWithCommas(etc);
+  document.getElementById("bttc").innerHTML = numberWithCommas(bttc);
+  const balance = (eth+bsc+clo) - (mintedToBridge+etc+bttc);
+  if (balance < 0) document.getElementById("balance").setAttribute("style", "color:red");
+  document.getElementById("balance").innerHTML = numberWithCommas(balance);
+}
+
+async function balanceOf(address, chain)
+{
+  const web3 = new Web3(providers[chain]);
+  const busdt = new web3.eth.Contract(token_abi, busdt_address[chain]);
+  if (address == busdt_address[chain]) 
+  {
+    return parseInt(web3.utils.fromWei(await busdt.methods.totalSupply().call()));
+  }
+  else
+  {
+    var r = web3.utils.fromWei(await busdt.methods.balanceOf(address).call());
+    if (chain == 1) r = r*1e12;
+    return parseInt(r);
+  }
+} 
+
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+getPoolsBalance();
+getBridgeBalance();
+
+
+</script>
+</body>
+
+</html>

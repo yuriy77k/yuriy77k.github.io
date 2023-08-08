@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Check Masternode</title>
+  <script src="./js/web3.min.js"></script>
+
+  <script>
+    const web3 = new Web3("https://rpc.callisto.network/");
+    //deposit transaction
+    const txs = [
+      "auth?tx=0xc3d7d46abb87873550b817f4e7e0fb3c1d26498e7f7a7e0f23c2845c0beccbb3&chain=56",
+      "auth?tx=0x3a9c815437130048bc9ce3f79ee58f7445bf1cbd3e3510d3d7be5cdae29d9db1&chain=820",
+      "auth?tx=0x86aaa6b779eb60b72be0a8ab2a160dde88d98f6dcc88b8252801b12f45eff3b1&chain=1",
+      "auth?tx=0xdffed056603a11da35fcc001daaea04e6853cc5f736b769e93386b8ade68227c&chain=61",
+      "auth?tx=0x0e5f34a67d1d0de1e35b337cb6aa7824d63052e8f2e55eec78e26f01b567d0a3&chain=199",      
+      "auth?tx=0xcee67fdf6bcf1993d3838c7be99df9455a9c09e0d55200ec9102ac2d93425a67&chain=137",      
+    ];
+
+    async function check() {
+      document.getElementById("msg").innerHTML = "";
+      document.getElementById("status").innerHTML = "Start checking...";
+      var uri = document.getElementById("uri").value;
+      if (uri.slice(-1) != "/") uri = uri + "/";
+      var respJSON;
+      var i = 0;
+      var address = "";
+      while (i < txs.length) {
+        var url = uri+txs[i];
+        var resp = await fetch(url);
+        respJSON = await resp.json();
+        if (!respJSON.isSuccess) {
+          console.log("ERROR authorization: "+respJSON.message);
+          alert("ERROR: authorization failed!");
+          return; 
+        }
+        var searchParams = new URLSearchParams(txs[i].substring(5));
+        var txId = searchParams.get("tx");
+        var chain = searchParams.get("chain");
+
+        var messageHash = web3.utils.soliditySha3(respJSON.token, respJSON.to, respJSON.value, txId, chain, respJSON.chainId);
+        var addr = web3.eth.accounts.recover(messageHash, respJSON.signature);
+        console.log(addr+" chain: "+chain);
+        if (i == 0) address = addr;
+
+        if (addr != address) {
+          console.log("ERROR authorization address: "+addr);
+          alert("ERROR: address failed!");
+          return; 
+        }
+        
+        i++;
+        document.getElementById("status").innerHTML = "checked: "+i+" of "+txs.length;
+      }
+      document.getElementById("msg").innerHTML = address;
+
+    }
+  </script>
+  
+  <style type="text/css">
+    .block1 { 
+     width: 200px; 
+     padding: 5px;
+     padding-right: 5px; 
+     border: solid 1px black; 
+     float: right;
+    }
+  </style>
+
+</head>
+
+<body>
+
+
+
+<p>Signer: <span id="msg"></span></p>
+
+
+<h3>Check Masternode</h3>
+MN URL: <input type="text" id="uri" size="100"></input> 
+<button type="button" onclick="check()">swap</button>
+<br>
+<span id="status"></span>
+
+</body>
+
+</html>
