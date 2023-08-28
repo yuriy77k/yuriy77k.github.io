@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>SOY swap</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="./js/web3.min.js"></script>
+  <script src="./js/token_abi.js"></script>
+  <script src="./js/router_abi.js"></script>
+  <style type="text/css">
+    .block1 { 
+     width: 200px; 
+     padding: 5px;
+     padding-right: 5px; 
+     border: solid 1px black; 
+     float: right;
+    }
+  </style>
+
+</head>
+
+<body>
+
+
+<h3>Soy swap 50k</h3>
+ETC: <span id="etc"></span><br>
+CLO-ETC: <span id="cetc"></span><br>
+<br>
+BNB: <span id="bnb"></span><br>
+CLO-BNB: <span id="cbnb"></span><br>
+<br>
+ETH: <span id="eth"></span><br>
+CLO-ETH: <span id="ceth"></span><br>
+<br>
+BUSDT: <span id="busdt"></span><br>
+CLO-BUSDT: <span id="cbusdt"></span><br>
+<br>
+CLO: <span id="clo"></span><br>
+<br>
+
+
+<script>
+
+const router_address = "0xeB5B468fAacC6bBdc14c4aacF0eec38ABCCC13e7";
+
+const token_address = {
+  "etc": "0xCCc766f97629a4E14b3af8C91EC54f0b5664A69F",
+  "bnb" : "0xcCDe29903E621Ca12DF33BB0aD9D1ADD7261Ace9",
+  "busdt" : "0xbf6c50889d3a620eb42C0F188b65aDe90De958c4",
+  "eth" : "0xcC208c32Cc6919af5d8026dAB7A3eC7A57CD1796",
+  "clo": "0xF5AD6F6EDeC824C7fD54A66d241a227F6503aD3a",
+  "soy": "0x9FaE2529863bD691B4A7171bDfCf33C7ebB10a65",
+};
+
+const pools_address = [
+  "0xB852AD87329986EaC6e991954fe329231D1E4De1", // BUSDT - CLO
+  "0x1ceE27d0627ce8A81dF9B4D7eEE0d753b8c2F613", // SOY/CLO
+  "0x23288A0a9c7ac3bEC523aeED146E4F0bf04d6309",  // SOY - BUSDT
+];
+
+
+
+const providers = {
+    "20729" : "https://testnet-rpc.callisto.network", // CLO test net
+    "820" : "https://rpc.callisto.network/", // CLO main net
+    "97" : "https://data-seed-prebsc-1-s1.binance.org:8545/",  // BSC test net
+    "56" : "https://bsc-dataseed.binance.org/",  // BSC main net
+    "1" : "https://eth.llamarpc.com",   // ETH main net
+    "61" : "https://etc.etcdesktop.com", // ETC main net
+    "199": "https://rpc.bt.io/",  // BTTC main net
+    "250" : "https://rpcapi.fantom.network/", // Fantom Opera mainnet
+    "137" : "https://polygon-rpc.com/", // Polygon Mainnet
+    "43114" : "https://api.avax.network/ext/bc/C/rpc", // Avalanche Mainnet
+    "1313161554" : "https://mainnet.aurora.dev", // Aurora mainnet
+    "5" : "https://goerli.infura.io/v3/", // ETH Goerli testnet
+};
+
+
+
+function getMarketDepth(symbol)
+{
+  //const symbol = 'BTCUSDT'; // spot, usdt-m PERPETUAL
+
+  const url = `https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=1`; // spot
+
+  return axios.get(url);
+  /*
+  .then((response) => {
+    return response.data;
+    const { bids, asks } = response.data;
+    //console.log(asks);
+    //console.log(bids);
+    return bids[0];
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+  */
+}
+
+async function getPrices()
+{
+  const web3 = new Web3(providers[820]);
+  const router = new web3.eth.Contract(router_abi, router_address);
+  const base_amount = "50000000000000000000000";  // 50K
+
+  const soy_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["etc"]]).call())[1]));
+  const soy_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["eth"]]).call())[1]));
+  const soy_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["bnb"]]).call())[1]));
+  const soy_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["busdt"]]).call())[1]));
+  const soy_clo_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["etc"]]).call())[2]));
+  const soy_clo_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["eth"]]).call())[2]));
+  const soy_clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["bnb"]]).call())[2]));  
+  const soy_clo_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["busdt"]]).call())[2]));  
+  const soy_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"]]).call())[1]));
+
+  const etc = parseFloat((await getMarketDepth("ETCUSDT")).data.asks[0][0]);
+  const eth = parseFloat((await getMarketDepth("ETHUSDT")).data.asks[0][0]);
+  const bnb = parseFloat((await getMarketDepth("BNBUSDT")).data.asks[0][0]);
+
+  document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("eth").innerHTML = `${soy_eth} ~ ${(soy_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("bnb").innerHTML = `${soy_bnb} ~ ${(soy_bnb*bnb).toFixed(2)} USD (${(soy_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("busdt").innerHTML = `${soy_busdt} USD (${(soy_busdt/5).toFixed(2)} USD per 10k SOY)`;
+
+  document.getElementById("cetc").innerHTML = `${soy_clo_etc} ~ ${(soy_clo_etc*etc).toFixed(2)} USD (${(soy_clo_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("ceth").innerHTML = `${soy_clo_eth} ~ ${(soy_clo_eth*eth).toFixed(2)} USD (${(soy_clo_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("cbnb").innerHTML = `${soy_clo_bnb} ~ ${(soy_clo_bnb*bnb).toFixed(2)} USD (${(soy_clo_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("cbusdt").innerHTML = `${soy_clo_busdt} USD (${(soy_clo_busdt/5).toFixed(2)} USD per 10k SOY)`;
+
+  document.getElementById("clo").innerHTML = `${soy_clo}`;
+
+}
+
+/*
+async function getPoolsBalance() 
+{
+  const chain = 820; // CLO chain
+  const web3 = new Web3(providers[chain]);
+  const busdt = new web3.eth.Contract(token_abi, busdt_address[chain]);
+  const bc = await balanceOf(pools_address[0], chain); // BUSDT - CLO
+  const sb = await balanceOf(pools_address[1], chain); // SOY - BUSDT
+
+  document.getElementById("bc").innerHTML = bc/1000;//.toFixed(2);
+  document.getElementById("sb").innerHTML = sb/1000;
+  document.getElementById("total").innerHTML =(bc+sb)/1000;
+}
+
+async function getBridgeBalance() 
+{
+  const eth = await balanceOf(bridge_address, 1);
+  const bsc = await balanceOf(bridge_address, 56);
+  const clo = await balanceOf(bridge_address, 820);
+  const etc = await balanceOf(busdt_address[61], 61);
+  const bttc = await balanceOf(busdt_address[199], 199);
+  document.getElementById("eth").innerHTML = numberWithCommas(eth);
+  document.getElementById("bsc").innerHTML = numberWithCommas(bsc);
+  document.getElementById("clo").innerHTML = numberWithCommas(clo);
+  document.getElementById("etc").innerHTML = numberWithCommas(etc);
+  document.getElementById("bttc").innerHTML = numberWithCommas(bttc);
+  const balance = (eth+bsc+clo) - (mintedToBridge+etc+bttc);
+  if (balance < 0) document.getElementById("balance").setAttribute("style", "color:red");
+  document.getElementById("balance").innerHTML = numberWithCommas(balance);
+}
+
+async function balanceOf(address, chain)
+{
+  const web3 = new Web3(providers[chain]);
+  const busdt = new web3.eth.Contract(token_abi, busdt_address[chain]);
+  if (address == busdt_address[chain]) 
+  {
+    return parseInt(web3.utils.fromWei(await busdt.methods.totalSupply().call()));
+  }
+  else
+  {
+    var r = web3.utils.fromWei(await busdt.methods.balanceOf(address).call());
+    if (chain == 1) r = r*1e12;
+    return parseInt(r);
+  }
+} 
+
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+getPoolsBalance();
+getBridgeBalance();
+
+*/
+getPrices();
+
+</script>
+</body>
+
+</html>
