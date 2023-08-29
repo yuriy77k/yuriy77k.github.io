@@ -125,7 +125,7 @@ async function getPrices()
   const web3 = new Web3(providers[820]);
   const router = new web3.eth.Contract(router_abi, router_address);
   const base_amount = "50000000000000000000000";  // 50K
-
+/*
   const soy_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["etc"]]).call())[1]));
   const soy_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["eth"]]).call())[1]));
   const soy_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["bnb"]]).call())[1]));
@@ -135,13 +135,18 @@ async function getPrices()
   const soy_clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["bnb"]]).call())[2]));  
   const soy_clo_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["busdt"]]).call())[2]));  
   const soy_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"]]).call())[1]));
+*/
+  const clo_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["etc"]]).call())[1]));
+  const clo_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["eth"]]).call())[1]));
+  const clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["bnb"]]).call())[1]));
+  const clo_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["busdt"]]).call())[1]));
 
   const etc = parseFloat((await getMarketDepth("ETCUSDT")).data.asks[0][0]);
   const eth = parseFloat((await getMarketDepth("ETHUSDT")).data.asks[0][0]);
   const bnb = parseFloat((await getMarketDepth("BNBUSDT")).data.asks[0][0]);
   //const clo = parseFloat((await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`))[0]);
   const clo = 0.00084;
-
+/*
   document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("eth").innerHTML = `${soy_eth} ~ ${(soy_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("bnb").innerHTML = `${soy_bnb} ~ ${(soy_bnb*bnb).toFixed(2)} USD (${(soy_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
@@ -153,6 +158,11 @@ async function getPrices()
   document.getElementById("cbusdt").innerHTML = `${soy_clo_busdt} USD (${(soy_clo_busdt/5).toFixed(2)} USD per 10k SOY)`;
 
   document.getElementById("clo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
+*/
+  document.getElementById("etc").innerHTML = `${clo_etc} ~ ${(clo_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("eth").innerHTML = `${clo_eth} ~ ${(clo_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("bnb").innerHTML = `${clo_bnb} ~ ${(clo_bnb*bnb).toFixed(2)} USD (${(soy_bnb*bnb/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("busdt").innerHTML = `${clo_busdt} USD (${(clo_busdt/5).toFixed(2)} USD per 10k CLO)`;
 
 }
 
