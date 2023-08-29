@@ -100,6 +100,26 @@ function getMarketDepth(symbol)
   */
 }
 
+async function test() 
+{
+  /*
+  const xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api-pub.bitfinex.com/v2/ticker/tCLOUSD", true);
+  xhr.withCredentials = true;
+  xhr.send(null);
+  */
+  const clo = await axios.get(
+    {
+      baseURL: `https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'accept': 'application/json',
+      },
+      withCredentials: true
+    });
+    console.log(clo);
+}
+
 async function getPrices()
 {
   const web3 = new Web3(providers[820]);
@@ -190,7 +210,8 @@ getPoolsBalance();
 getBridgeBalance();
 
 */
-getPrices();
+//getPrices();
+test();
 
 </script>
 </body>
