@@ -119,6 +119,7 @@ async function getPrices()
   const etc = parseFloat((await getMarketDepth("ETCUSDT")).data.asks[0][0]);
   const eth = parseFloat((await getMarketDepth("ETHUSDT")).data.asks[0][0]);
   const bnb = parseFloat((await getMarketDepth("BNBUSDT")).data.asks[0][0]);
+  const clo = parseFloat((await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`))[0]);
 
   document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("eth").innerHTML = `${soy_eth} ~ ${(soy_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
@@ -130,7 +131,7 @@ async function getPrices()
   document.getElementById("cbnb").innerHTML = `${soy_clo_bnb} ~ ${(soy_clo_bnb*bnb).toFixed(2)} USD (${(soy_clo_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("cbusdt").innerHTML = `${soy_clo_busdt} USD (${(soy_clo_busdt/5).toFixed(2)} USD per 10k SOY)`;
 
-  document.getElementById("clo").innerHTML = `${soy_clo}`;
+  document.getElementById("clo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
 
 }
 
