@@ -110,12 +110,10 @@ async function test()
   https://api-pub.bitfinex.com/v2/calc/trade/avg?symbol=tCLOUSD&amount=1000
   https://api-pub.bitfinex.com/v2/ticker/tCLOUSD
   */
-  //const clo = await axios.post(`https://api-pub.bitfinex.com/v2/calc/trade/avg?symbol=tCLOUSD&amount=1000`,
-  const clo = await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`,
+  const clo = await axios.post(`https://api-pub.bitfinex.com/v2/calc/trade/avg?symbol=tCLOUSD&amount=1000`,
+  //const clo = await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`,
     {
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Origin': '*',
         'accept': 'application/json',
       },
       withCredentials: true
