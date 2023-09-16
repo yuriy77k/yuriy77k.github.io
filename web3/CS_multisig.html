@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Callisto Security Multisig</title>
+  <script src="./js/web3.min.js"></script>
+  <script src="./js/token_abi.js"></script>
+  <style type="text/css">
+    .block1 { 
+     width: 200px; 
+     padding: 5px;
+     padding-right: 5px; 
+     border: solid 1px black; 
+     float: right;
+    }
+  </style>
+
+</head>
+
+<body>
+
+
+<button type="button" id="login" onclick="login()">Connect wallet</button>
+
+
+<h3><a href="https://bscscan.com/address/0x6317c6944bd1cD3932d062cce39d7Fd602119529">BSC wallet</a></h3>
+USDT balance: <span id="bsc"></span><br>
+Transfer USDT:<br>
+Address of receiver <input type="text" id="arg0_r0"></input>, 
+Amount <input type="number" id="arg1_r0"></input>, 
+<button type="button" onclick="vote(0,2)">vote</button>
+
+<h3><a href="https://etherscan.io/address/0x6317c6944bd1cD3932d062cce39d7Fd602119529">ETH wallet</a></h3>
+USDT balance: <span id="eth"></span><br>
+Transfer USDT:<br>
+Address of receiver <input type="text" id="arg0_r1"></input>, 
+Amount <input type="number" id="arg1_r1"></input>, 
+<button type="button" onclick="vote(1,2)">vote</button>
+
+
+
+
+<script>
+const multisig = "0x6317c6944bd1cD3932d062cce39d7Fd602119529";
+var params = {};
+var BN;
+var gasPrice;
+
+// function vote(address to, uint256 value, bytes calldata data)
+const voteFunc = {
+    name: 'vote',
+    type: 'function',
+    inputs: [{
+        type: 'address',
+        name: 'to'
+    },{
+        type: 'uint256',
+        name: 'value'
+    },{
+        type: 'bytes',
+        name: 'date'
+    }]    
+}
+
+const Rules = [
+{
+        name: "Transfer USDT on BSC (to, amount)", // 0
+        chainId: "0x38", // BSC chain
+        address: "0x55d398326f99059ff775485246999027b3197955",
+        ABI: {
+            name: 'transfer',
+            type: 'function',
+            inputs: [{
+                type: 'address',
+                name: 'receiver'
+            },{
+                type: 'uint256',
+                name: 'value'
+            }]    
+        }
+    },
+    {
+        name: "Transfer USDT on ETH (to, amount)", // 1
+        chainId: "0x1", // ETH chain
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        ABI: {
+            name: 'transfer',
+            type: 'function',
+            inputs: [{
+                type: 'address',
+                name: 'receiver'
+            },{
+                type: 'uint256',
+                name: 'value'
+            }]    
+        }
+    },    
+]    
+
+async function login() {
+    //clean();
+    if (typeof ethereum !== 'undefined') {
+        window.web3 = new Web3(ethereum);
+        address = await ethereum.enable()
+        web3.eth.defaultAccount = address[0];
+        console.log(web3.eth.defaultAccount);
+        var gas = await web3.eth.getGasPrice();
+        gasPrice = parseInt(gas*1).toString();
+
+        params = {
+            from: web3.eth.defaultAccount, //addr[0]
+            gasPrice: 0,//parseInt(gas*1),//web3.utils.toWei(10, "Gwei"),
+            value: 0,
+            gas: 300000,
+        };
+        BN = web3.utils.BN;
+        //token_main = new web3.eth.Contract(token_abi, token_main_addr, params);
+        document.getElementById("login").innerHTML=web3.eth.defaultAccount;
+    }
+    setTimeout(update_wallets,100);
+}
+
+// if args use as is.
+async function vote(ruleId, argsNum) {
+    var i = 0;
+    var val = [];
+    while (i<argsNum) {
+        let el = document.getElementById("arg"+i+"_r"+ruleId);
+        var value = el.value;
+        if (el.type == "number") {
+            value = web3.utils.toWei(value.toString());
+
+            // reduce decimals by 12 for USDT on ETH
+            if (ruleId == 1) {
+                value = value.slice(0, -12); // Remove the last 12 symbols
+                console.log(value);
+            }       
+        }
+        val.push(value);
+        i++;
+    }
+    //console.log(val, Rules[ruleId]);
+    var args  = web3.eth.abi.encodeFunctionCall(Rules[ruleId].ABI, val);
+    //var args = encodeArgs(Rules[ruleId].ABI, val);
+    //console.log(args);
+    var data = web3.eth.abi.encodeFunctionCall(voteFunc,[Rules[ruleId].address,"0",args]);
+    console.log(data);
+    //document.getElementById("msg").innerHTML = data;
+    
+    if (web3.eth.currentProvider.chainId != Rules[ruleId].chainId) {
+        alert("Switch chain");
+        return;
+    }
+    
+    let send = web3.eth.sendTransaction({from:web3.eth.defaultAccount,to:multisig, value:0, data: data});
+    console.log(send);
+}
+
+async function update_wallets()
+{
+    const bsc = await balanceOf(multisig, 56);
+    const eth = await balanceOf(multisig, 1);
+    document.getElementById("bsc").innerHTML = bsc.toFixed(2);
+    document.getElementById("eth").innerHTML = eth.toFixed(2);
+
+}
+
+const providers = {
+    "20729" : "https://testnet-rpc.callisto.network", // CLO test net
+    "820" : "https://rpc.callisto.network/", // CLO main net
+    "97" : "https://data-seed-prebsc-1-s1.binance.org:8545/",  // BSC test net
+    "56" : "https://bsc-dataseed.binance.org/",  // BSC main net
+    "1" : "https://eth.llamarpc.com",   // ETH main net
+    "61" : "https://etc.etcdesktop.com", // ETC main net
+    "199": "https://rpc.bt.io/",  // BTTC main net
+    "250" : "https://rpcapi.fantom.network/", // Fantom Opera mainnet
+    "137" : "https://polygon-rpc.com/", // Polygon Mainnet
+    "43114" : "https://api.avax.network/ext/bc/C/rpc", // Avalanche Mainnet
+    "1313161554" : "https://mainnet.aurora.dev", // Aurora mainnet
+    "5" : "https://goerli.infura.io/v3/", // ETH Goerli testnet
+};
+
+const busdt_address = {
+  "820": "0xbf6c50889d3a620eb42C0F188b65aDe90De958c4",  // BUSDT CLO main net
+  "56" : "0x55d398326f99059fF775485246999027B3197955",  // USDT BSC main net
+  "1" : "0xdAC17F958D2ee523a2206206994597C13D831ec7",   // USDT ETH main net
+  "61" : "0xCC48CD0B4a6f50b8f8bf0f9b80eD7881fA547968",  // wrapped BUSDT ETC main net
+  "199": "0xCC78D0A86B0c0a3b32DEBd773Ec815130F9527CF",  // wrapped BUSDT BTTC main net
+};
+
+async function balanceOf(address, chain)
+{
+    const w3 = new Web3(providers[chain]);
+    const busdt = new w3.eth.Contract(token_abi, busdt_address[chain]);
+    var r = await busdt.methods.balanceOf(address).call();
+    if (chain == 1) r = r + "000000000000"; // add 12 decimals for USDT on ETH
+    return parseFloat(web3.utils.fromWei(r));
+} 
+
+</script>
+</body>
+
+</html>

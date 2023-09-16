@@ -245,6 +245,12 @@ async function vote(ruleId, argsNum) {
         var value = el.value;
         if (el.type == "number") {
             value = web3.utils.toWei(value.toString());
+            
+            // reduce decimals by 12 for USDT on ETH
+            if (ruleId == 3) {
+                value = value.slice(0, -12); // Remove the last 12 symbols
+                console.log(value);
+            }
         }
         val.push(value);
         i++;
