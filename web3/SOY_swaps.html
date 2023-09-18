@@ -155,6 +155,7 @@ async function getPrices()
   const eth = parseFloat((await getMarketDepth("ETHUSDT")).data.asks[0][0]);
   const bnb = parseFloat((await getMarketDepth("BNBUSDT")).data.asks[0][0]);
   //const clo = parseFloat((await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`))[0]);
+  //const clo = parseFloat((await axios.get(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=CLO_USDT`)).highest_bid);
   const clo = 0.0006;
 
   document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
