@@ -36,15 +36,20 @@ SOY-CLO-ETH: <span id="ceth"></span><br>
 <br>
 SOY-BUSDT: <span id="busdt"></span><br>
 SOY-CLO-BUSDT: <span id="cbusdt"></span><br>
-<br>
 
 <h3>CLO swap 50k</h3>
-CLO-ETC: <span id="etc"></span><br>
-CLO-BNB: <span id="bnb"></span><br>
-CLO-ETH: <span id="eth"></span><br>
-CLO-BUSDT: <span id="busdt"></span><br>
+CLO-ETC: <span id="cletc"></span><br>
+CLO-BNB: <span id="clbnb"></span><br>
+CLO-ETH: <span id="cleth"></span><br>
+CLO-BUSDT: <span id="clbusdt"></span><br>
 <br>
-CLO: <span id="clo"></span><br>
+
+<h3>Set CLO market price</h3>
+<input type="number" id="clo_price"></input>, 
+<button type="button" onclick="set_price()">set</button><br>
+<br>
+SOY-CLO * market: <span id="sclo"></span><br>
+CLO * market: <span id="clo"></span><br>
 <br>
 
 
@@ -85,6 +90,7 @@ const providers = {
 };
 
 
+var soy_clo = 0;
 
 function getMarketDepth(symbol)
 {
@@ -117,6 +123,13 @@ async function test()
   return r;
 }
 
+function set_price()
+{
+  let clo = document.getElementById("clo_price").value;
+  document.getElementById("clo").innerHTML = `${(50000*clo).toFixed(2)} USD (${(50000*clo/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("sclo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
+}
+
 async function getPrices()
 {
   const web3 = new Web3(providers[820]);
@@ -131,7 +144,7 @@ async function getPrices()
   const soy_clo_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["eth"]]).call())[2]));
   const soy_clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["bnb"]]).call())[2]));  
   const soy_clo_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["busdt"]]).call())[2]));  
-  const soy_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"]]).call())[1]));
+  soy_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"]]).call())[1]));
 
   const clo_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["etc"]]).call())[1]));
   const clo_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["eth"]]).call())[1]));
@@ -154,12 +167,13 @@ async function getPrices()
   document.getElementById("cbnb").innerHTML = `${soy_clo_bnb} ~ ${(soy_clo_bnb*bnb).toFixed(2)} USD (${(soy_clo_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("cbusdt").innerHTML = `${soy_clo_busdt} USD (${(soy_clo_busdt/5).toFixed(2)} USD per 10k SOY)`;
 
-  document.getElementById("clo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
+  document.getElementById("sclo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
 
-  document.getElementById("etc").innerHTML = `${clo_etc} ~ ${(clo_etc*etc).toFixed(2)} USD (${(clo_etc*etc/5).toFixed(2)} USD per 10k CLO)`;
-  document.getElementById("eth").innerHTML = `${clo_eth} ~ ${(clo_eth*eth).toFixed(2)} USD (${(clo_eth*eth/5).toFixed(2)} USD per 10k CLO)`;
-  document.getElementById("bnb").innerHTML = `${clo_bnb} ~ ${(clo_bnb*bnb).toFixed(2)} USD (${(clo_bnb*bnb/5).toFixed(2)} USD per 10k CLO)`;
-  document.getElementById("busdt").innerHTML = `${clo_busdt} USD (${(clo_busdt/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("cletc").innerHTML = `${clo_etc} ~ ${(clo_etc*etc).toFixed(2)} USD (${(clo_etc*etc/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("cleth").innerHTML = `${clo_eth} ~ ${(clo_eth*eth).toFixed(2)} USD (${(clo_eth*eth/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("clbnb").innerHTML = `${clo_bnb} ~ ${(clo_bnb*bnb).toFixed(2)} USD (${(clo_bnb*bnb/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("clbusdt").innerHTML = `${clo_busdt} USD (${(clo_busdt/5).toFixed(2)} USD per 10k CLO)`;
+  document.getElementById("clo").innerHTML = `${(50000*clo).toFixed(2)} USD (${(50000*clo/5).toFixed(2)} USD per 10k CLO)`;
 
 
 }
@@ -219,8 +233,8 @@ getPoolsBalance();
 getBridgeBalance();
 
 */
-//getPrices();
-test();
+getPrices();
+//test();
 
 </script>
 </body>
