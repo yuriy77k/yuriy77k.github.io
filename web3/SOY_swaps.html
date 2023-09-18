@@ -25,17 +25,24 @@
 
 
 <h3>Soy swap 50k</h3>
-ETC: <span id="etc"></span><br>
-CLO-ETC: <span id="cetc"></span><br>
+SOY-ETC: <span id="etc"></span><br>
+SOY-CLO-ETC: <span id="cetc"></span><br>
 <br>
-BNB: <span id="bnb"></span><br>
-CLO-BNB: <span id="cbnb"></span><br>
+SOY-BNB: <span id="bnb"></span><br>
+SOY-CLO-BNB: <span id="cbnb"></span><br>
 <br>
-ETH: <span id="eth"></span><br>
-CLO-ETH: <span id="ceth"></span><br>
+SOY-ETH: <span id="eth"></span><br>
+SOY-CLO-ETH: <span id="ceth"></span><br>
 <br>
-BUSDT: <span id="busdt"></span><br>
-CLO-BUSDT: <span id="cbusdt"></span><br>
+SOY-BUSDT: <span id="busdt"></span><br>
+SOY-CLO-BUSDT: <span id="cbusdt"></span><br>
+<br>
+
+<h3>CLO swap 50k</h3>
+CLO-ETC: <span id="etc"></span><br>
+CLO-BNB: <span id="bnb"></span><br>
+CLO-ETH: <span id="eth"></span><br>
+CLO-BUSDT: <span id="busdt"></span><br>
 <br>
 CLO: <span id="clo"></span><br>
 <br>
@@ -102,22 +109,12 @@ function getMarketDepth(symbol)
 
 async function test() 
 {
-  /*
-  const xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://api-pub.bitfinex.com/v2/ticker/tCLOUSD", true);
-  xhr.withCredentials = true;
-  xhr.send(null);
-  https://api-pub.bitfinex.com/v2/calc/trade/avg?symbol=tCLOUSD&amount=1000
-  https://api-pub.bitfinex.com/v2/ticker/tCLOUSD
-  */
-  //const clo = await axios.post(`https://api-pub.bitfinex.com/v2/calc/trade/avg?symbol=tCLOUSD&amount=1000`,
-  const clo = await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`,
-    {
-      headers: {
-        'accept': 'application/json',
-      },
-    });
-    console.log(clo);
+
+  const url = `https://api.gateio.ws/api/v4/spot/tickers?currency_pair=CLO_USDT`; // spot
+  const r = await axios.get(url);
+  console.log(r);
+  console.log(r.highest_bid);
+  return r;
 }
 
 async function getPrices()
@@ -125,7 +122,7 @@ async function getPrices()
   const web3 = new Web3(providers[820]);
   const router = new web3.eth.Contract(router_abi, router_address);
   const base_amount = "50000000000000000000000";  // 50K
-/*
+
   const soy_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["etc"]]).call())[1]));
   const soy_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["eth"]]).call())[1]));
   const soy_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["bnb"]]).call())[1]));
@@ -135,7 +132,7 @@ async function getPrices()
   const soy_clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["bnb"]]).call())[2]));  
   const soy_clo_busdt = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"],token_address["busdt"]]).call())[2]));  
   const soy_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["soy"],token_address["clo"]]).call())[1]));
-*/
+
   const clo_etc = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["etc"]]).call())[1]));
   const clo_eth = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["eth"]]).call())[1]));
   const clo_bnb = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["clo"],token_address["bnb"]]).call())[1]));
@@ -145,8 +142,8 @@ async function getPrices()
   const eth = parseFloat((await getMarketDepth("ETHUSDT")).data.asks[0][0]);
   const bnb = parseFloat((await getMarketDepth("BNBUSDT")).data.asks[0][0]);
   //const clo = parseFloat((await axios.get(`https://api-pub.bitfinex.com/v2/ticker/tCLOUSD`))[0]);
-  const clo = 0.00084;
-/*
+  const clo = 0.0006;
+
   document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("eth").innerHTML = `${soy_eth} ~ ${(soy_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("bnb").innerHTML = `${soy_bnb} ~ ${(soy_bnb*bnb).toFixed(2)} USD (${(soy_bnb*bnb/5).toFixed(2)} USD per 10k SOY)`;
@@ -158,11 +155,12 @@ async function getPrices()
   document.getElementById("cbusdt").innerHTML = `${soy_clo_busdt} USD (${(soy_clo_busdt/5).toFixed(2)} USD per 10k SOY)`;
 
   document.getElementById("clo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
-*/
+
   document.getElementById("etc").innerHTML = `${clo_etc} ~ ${(clo_etc*etc).toFixed(2)} USD (${(clo_etc*etc/5).toFixed(2)} USD per 10k CLO)`;
   document.getElementById("eth").innerHTML = `${clo_eth} ~ ${(clo_eth*eth).toFixed(2)} USD (${(clo_eth*eth/5).toFixed(2)} USD per 10k CLO)`;
   document.getElementById("bnb").innerHTML = `${clo_bnb} ~ ${(clo_bnb*bnb).toFixed(2)} USD (${(clo_bnb*bnb/5).toFixed(2)} USD per 10k CLO)`;
   document.getElementById("busdt").innerHTML = `${clo_busdt} USD (${(clo_busdt/5).toFixed(2)} USD per 10k CLO)`;
+
 
 }
 
@@ -221,8 +219,8 @@ getPoolsBalance();
 getBridgeBalance();
 
 */
-getPrices();
-//test();
+//getPrices();
+test();
 
 </script>
 </body>
