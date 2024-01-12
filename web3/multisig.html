@@ -26,7 +26,12 @@
 <p>Send 0 CLO to address: 0xb623E7A53835Ed23b23D13B77EC12493fF1eA70F with data: <span id="msg"></span></p>
 
 <h2>Callisto Chain</h2>
+<h3>Transfer BUSDT from <a href="https://explorer.callisto.network/address/0x749b1cd5A2696440f2B7f3EAE91e78c887Bd3f1E/transactions">collateral wallet</a></h3>
+Address of receiver <input type="text" id="arg0_r1"></input>, 
+Amount <input type="number" id="arg1_r1"></input>, 
+<button type="button" onclick="vote(1,2,true)">vote</button>
 
+<hr>
 <h3>Mint BUSDT</h3>
 Amount <input type="number" id="arg0_r0"></input>, 
 <button type="button" onclick="vote(0,1)">vote</button>
@@ -77,6 +82,7 @@ Amount <input type="number" id="arg1_r3"></input>,
 <script>
 
 const multisig = "0xb623E7A53835Ed23b23D13B77EC12493fF1eA70F";
+const multisigCollateral = "0x749b1cd5A2696440f2B7f3EAE91e78c887Bd3f1E";
 var params = {};
 var BN;
 var gasPrice;
@@ -237,7 +243,7 @@ async function login() {
 }
 
 // if args use as is.
-async function vote(ruleId, argsNum) {
+async function vote(ruleId, argsNum, isCollateral = false) {
     var i = 0;
     var val = [];
     while (i<argsNum) {
@@ -266,7 +272,10 @@ async function vote(ruleId, argsNum) {
         alert("Switch chain");
         return;
     }
-    let send = web3.eth.sendTransaction({from:web3.eth.defaultAccount,to:multisig, value:0, data: data});
+    var contract = multisig;
+    if (isCollateral) contract = multisigCollateral;
+
+    let send = web3.eth.sendTransaction({from:web3.eth.defaultAccount,to:contract, value:0, data: data});
     console.log(send);
 }
 
