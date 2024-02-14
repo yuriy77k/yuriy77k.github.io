@@ -132,7 +132,10 @@ async function getRound() {
     const vestingData = await vesting.methods.getUnlockedAmount(web3.eth.defaultAccount).call();
     document.getElementById("locked").innerHTML = web3.utils.fromWei(vestingData.lockedAmount);
     document.getElementById("unlocked").innerHTML = web3.utils.fromWei(vestingData.unlockedAmount);
-    document.getElementById("release").innerHTML = new Date(vestingData.nextUnlock*1000).toString();
+    if (parseInt(vestingData.lockedAmount) == 0 && parseInt(vestingData.unlockedAmount) == 0 )  
+        document.getElementById("release").innerHTML = "No tokens on vesting"
+    else
+        document.getElementById("release").innerHTML = new Date(vestingData.nextUnlock*1000).toString();
     if(parseInt(vestingData.unlockedAmount) > 0) document.getElementById("claim").disabled = false;
     else document.getElementById("claim").disabled = true;
 
@@ -164,7 +167,7 @@ async function buy(amount) {
             console.log("You can buy "+web3.utils.fromWei(amount.toString())+" tokens");
         }
         const price = BigInt(round.price); // token price
-        const value = price * amount / BigInt(1e18);
+        var value = price * amount / BigInt(1e18);
         console.log("You should pay "+web3.utils.fromWei(value.toString())+" USDT");
 
         const usdt = new web3.eth.Contract(token_abi, chainData[chainId].usdt);
@@ -184,6 +187,10 @@ async function buy(amount) {
             var params = {from:  userAddress};
             if (chainId == 56) // BSC
                 params.gasPrice = gasPrice;
+            else if (chainId == 1) //ETH
+            {
+                value = value / BigInt(1e12); // USDT on ETH has 6 decimals, so we need to remove 12 decimals
+            }
             const allowance = BigInt(await usdt.methods.allowance(userAddress, bridgeAddress).call()); // get current allowance
             console.log(params);
             if (allowance < value) {
@@ -216,7 +223,7 @@ async function waitBlocks(tx, chain, startBlock, delay) {
         })
         .then((data) => {
             console.log(data);
-            document.getElementById("msg").innerHTML = data.isSuccess == true ? data.txHash : data.message;
+            document.getElementById("msg").innerHTML = data.isSuccess == true ? "transaction: "+data.txHash : data.message;
             getRound();
         });
     } else {
