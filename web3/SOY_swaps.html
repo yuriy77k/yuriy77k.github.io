@@ -43,6 +43,10 @@ CLO-BNB: <span id="clbnb"></span><br>
 CLO-ETH: <span id="cleth"></span><br>
 CLO-BUSDT: <span id="clbusdt"></span><br>
 <br>
+CLO migrated: <span id="m_clo"></span><br>
+CLOE migrated: <span id="m_cloe"></span><br>
+<br>
+
 
 <h3>Set CLO market price</h3>
 <input type="number" id="clo_price"></input>, 
@@ -130,6 +134,10 @@ function set_price()
   //document.getElementById("sclo").innerHTML = `${soy_clo} ~ ${(soy_clo*clo).toFixed(2)} USD (${(soy_clo*clo/5).toFixed(2)} USD per 10k SOY)`;
 }
 
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 async function getPrices()
 {
   const web3 = new Web3(providers[820]);
@@ -158,6 +166,12 @@ async function getPrices()
   //const clo = parseFloat((await axios.get(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=CLO_USDT`)).highest_bid);
   //const clo = parseFloat((await axios.get(`https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id=2757`)).data.statistics.price);
   const clo = 0.0005;
+
+  const m_clo = await web3.eth.getBalance("0x3986E815F87feA74910F7aDeAcD1cE7f172E1df0");
+  const cloe_token = new web3.eth.Contract(token_abi, "0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187");
+  const m_cloe = await cloe_token.methods.balanceOf("0xAA4DfDdC6f3C0a184B66ECBd7F7fec5106FF921B");
+  document.getElementById("m_clo").innerHTML =numberWithCommas(parseInt(web3.utils.fromWei(m_clo)));
+  document.getElementById("m_cloe").innerHTML =numberWithCommas(parseInt(web3.utils.fromWei(m_cloe)));
 /*
   document.getElementById("etc").innerHTML = `${soy_etc} ~ ${(soy_etc*etc).toFixed(2)} USD (${(soy_etc*etc/5).toFixed(2)} USD per 10k SOY)`;
   document.getElementById("eth").innerHTML = `${soy_eth} ~ ${(soy_eth*eth).toFixed(2)} USD (${(soy_eth*eth/5).toFixed(2)} USD per 10k SOY)`;
