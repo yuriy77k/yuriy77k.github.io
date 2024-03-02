@@ -169,7 +169,8 @@ async function getPrices()
 
   const m_clo = await web3.eth.getBalance("0x3986E815F87feA74910F7aDeAcD1cE7f172E1df0");
   const cloe_token = new web3.eth.Contract(token_abi, "0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187");
-  const m_cloe = await cloe_token.methods.balanceOf("0xAA4DfDdC6f3C0a184B66ECBd7F7fec5106FF921B");
+  const m_cloe = await cloe_token.methods.balanceOf("0xAA4DfDdC6f3C0a184B66ECBd7F7fec5106FF921B").call();
+  console.log(m_cloe.toString());
   document.getElementById("m_clo").innerHTML =numberWithCommas(parseInt(web3.utils.fromWei(m_clo)));
   document.getElementById("m_cloe").innerHTML =numberWithCommas(parseInt(web3.utils.fromWei(m_cloe)));
 /*
