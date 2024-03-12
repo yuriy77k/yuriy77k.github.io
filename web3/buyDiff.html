@@ -31,10 +31,12 @@
     Available DIFF tokens: <span id="available"></span></br>
     DIFF price: <span id="price"></span> USDT</br>
 </p>
-<h3>Buy Diff tokens</h3>
-I want <input type="number" id="want" onchange="updateValue(1)"></input> DIFF tokens</br>
-I'll pay <input type="number" id="amount" onchange="updateValue(2)"></input> USDT</br>
-<button type="button" onclick="buy(document.getElementById('want').value)">Buy</button>
+<h3>Buy Diff tokens by Virtual USD</h3>
+Address: <input type="text" size="60" id="address"></input>
+<button type="button" onclick="vesting()">Check Vesting</button></br>
+Want <input type="number" id="want" onchange="updateValue(1)"></input> DIFF tokens</br>
+Pay <input type="number" id="amount" onchange="updateValue(2)"></input> USDT</br>
+<button type="button" onclick="buyVirtual(document.getElementById('want').value)">Buy</button>
 <p><span id="msg"></span></p>
 
 <h3>Vesting</h3>
@@ -68,10 +70,11 @@ const chainData = {
         usdtDecimals: 6
     },
 }
+const VUSD = "0xA032bE9AC4113ef7B8208563b6Cc633A2d0583Ab";
 const cloRPC = "https://rpc.callisto.network/";
 const bridgeAddress = "0x9a1fc8C0369D49f3040bF49c1490E7006657ea56";
-const icoAddress = "0x2F01D05bf64650Fc896573e7dCa331E878Ae7616";
-const vestingAddress ="0x998E30F94eb06883d6Bb7D7A6FfCff37C5a0e562";
+const icoAddress = "0xcDCf1A978553f64AC55F280702D2Cdd239a49beA";
+const vestingAddress ="0xe5A5837b96176d6E47E541F186B2348DED2c0A1d";
 
 var gasPrice;
 
@@ -121,15 +124,24 @@ async function getRound() {
     const web3CLO = new Web3(cloRPC);
     // get round data
     const ico = new web3CLO.eth.Contract(ico_abi, icoAddress);
-    const currentRound = await ico.methods.currentRound().call(); 
-    const round = await ico.methods. rounds(currentRound).call(); 
+    const round = await ico.methods.getCurrentRound().call(); 
     //console.log(round);
     document.getElementById("available").innerHTML = web3.utils.fromWei(round.amount) - web3.utils.fromWei(round.totalSold);
     document.getElementById("price").innerHTML = web3.utils.fromWei(round.price);
 
+    // set vesting address
+    if(document.getElementById("address").value == "")
+        document.getElementById("address").value = web3.eth.defaultAccount;
+    vesting();
+    return round;
+}
+
+async function vesting() {
+    const web3CLO = new Web3(cloRPC);
     // get vesting data
+    const address = document.getElementById("address").value;
     const vesting = new web3CLO.eth.Contract(vesting_abi, vestingAddress);
-    const vestingData = await vesting.methods.getUnlockedAmount(web3.eth.defaultAccount).call();
+    const vestingData = await vesting.methods.getUnlockedAmount(address).call();
     document.getElementById("locked").innerHTML = web3.utils.fromWei(vestingData.lockedAmount);
     document.getElementById("unlocked").innerHTML = web3.utils.fromWei(vestingData.unlockedAmount);
     if (parseInt(vestingData.lockedAmount) == 0 && parseInt(vestingData.unlockedAmount) == 0 )  
@@ -138,20 +150,58 @@ async function getRound() {
         document.getElementById("release").innerHTML = new Date(vestingData.nextUnlock*1000).toString();
     if(parseInt(vestingData.unlockedAmount) > 0) document.getElementById("claim").disabled = false;
     else document.getElementById("claim").disabled = true;
-
-    return round;
 }
 
+
 async function claim() {
+    const address = document.getElementById("address").value;
     var chainId = parseInt(web3.eth.currentProvider.chainId);
     if (chainId != 820) {
         alert("Switch to Callisto Network chain");
         return;
     }
     const vesting = new web3.eth.Contract(vesting_abi, vestingAddress);
-    const tx = await vesting.methods.claim().send({from:  web3.eth.defaultAccount,}); // web3.eth.defaultAccount must be user's active wallet address
+    const tx = await vesting.methods.claimBehalf(address).send({from:  web3.eth.defaultAccount,}); // web3.eth.defaultAccount must be user's active wallet address
     console.log(tx);
     await getRound();
+}
+
+async function buyVirtual(amount) {
+    document.getElementById("msg").innerHTML = "";
+    if(checkChain()) {
+        const userAddress = document.getElementById("address").value; // web3.eth.defaultAccount must be user's active wallet address
+        const chainId = parseInt(web3.eth.currentProvider.chainId);
+        const round = await getRound();
+        const available = BigInt(round.amount) - BigInt(round.totalSold); // available is a number with 18 decimals.
+        amount = BigInt(amount * 1e18);
+        if (amount > available) {
+            amount = available;
+            console.log("You can buy "+web3.utils.fromWei(amount.toString())+" tokens");
+        }
+        const price = BigInt(round.price); // token price
+        var value = price * amount / BigInt(1e18);
+        console.log("You should pay "+web3.utils.fromWei(value.toString())+" USDT");
+
+        const usdt = new web3.eth.Contract(token_abi, VUSD);
+        if(chainId == 820) // don't use bridge for Callisto chain
+        {
+            const allowance = BigInt(await usdt.methods.allowance(web3.eth.defaultAccount, icoAddress).call()); // get current allowance
+            if (allowance < value) {
+                await usdt.methods.approve(icoAddress, "1000000000000000000000000").send({from:  web3.eth.defaultAccount,}); // approve USDT transfer
+            }
+            const ico = new web3.eth.Contract(ico_abi, icoAddress);
+            const tx = await ico.methods.buyTokenVirtual(amount.toString(), userAddress).send({from:  web3.eth.defaultAccount,}); 
+            console.log(tx);
+            document.getElementById("msg").innerHTML = "transaction: " + tx.transactionHash;
+        } 
+        else
+        {
+            alert("unsupported chain");
+        }
+        getRound();
+    } else {
+        alert("unsupported chain");
+    }
 }
 
 async function buy(amount) {
