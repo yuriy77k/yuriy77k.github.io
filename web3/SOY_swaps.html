@@ -128,7 +128,7 @@ async function test()
   return r;
 }
 
-function getRateCLOE() {
+async function getRateCLOE() {
   const web3 = new Web3(providers[820]);
   const router = new web3.eth.Contract(router_abi, router_address);
   const base_amount = "100000000000000000000000";  // 500K
