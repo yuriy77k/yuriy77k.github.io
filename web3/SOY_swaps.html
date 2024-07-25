@@ -44,7 +44,7 @@ CLO-ETH: <span id="cleth"></span><br>
 CLO-BUSDT: <span id="clbusdt"></span><br>
 <br>
 CLO migrated: <span id="m_clo"></span><br>
-CLOE migrated: <span id="m_cloe"></span><br>
+CLOE/CLO price: <span id="m_cloe"></span><br>
 <br>
 
 
@@ -68,6 +68,7 @@ const token_address = {
   "eth" : "0xcC208c32Cc6919af5d8026dAB7A3eC7A57CD1796",
   "clo": "0xF5AD6F6EDeC824C7fD54A66d241a227F6503aD3a",
   "soy": "0x9FaE2529863bD691B4A7171bDfCf33C7ebB10a65",
+  "cloe": "0x1eAa43544dAa399b87EEcFcC6Fa579D5ea4A6187",
 };
 
 const pools_address = [
@@ -125,6 +126,14 @@ async function test()
   console.log(r);
   console.log(r.highest_bid);
   return r;
+}
+
+function getRateCLOE() {
+  const web3 = new Web3(providers[820]);
+  const router = new web3.eth.Contract(router_abi, router_address);
+  const base_amount = "100000000000000000000000";  // 500K
+  const cloe_clo = parseFloat(web3.utils.fromWei((await router.methods. getAmountsOut(base_amount,[token_address["cloe"],token_address["clo"]]).call())[1]));
+  document.getElementById("m_cloe").innerHTML = (cloe_clo / 100000).toFixed(2);
 }
 
 function set_price()
@@ -250,8 +259,9 @@ getPoolsBalance();
 getBridgeBalance();
 
 */
-getPrices();
+//getPrices();
 //test();
+getRateCLOE();
 
 </script>
 </body>
