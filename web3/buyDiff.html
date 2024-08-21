@@ -70,11 +70,21 @@ const chainData = {
         usdtDecimals: 6
     },
 }
+/*
+// Callisto chain
 const VUSD = "0xA032bE9AC4113ef7B8208563b6Cc633A2d0583Ab";
 const cloRPC = "https://rpc.callisto.network/";
 const bridgeAddress = "0x9a1fc8C0369D49f3040bF49c1490E7006657ea56";
 const icoAddress = "0xcDCf1A978553f64AC55F280702D2Cdd239a49beA";
 const vestingAddress ="0xe5A5837b96176d6E47E541F186B2348DED2c0A1d";
+*/
+
+// ETH chain
+const VUSD = "0xB4601c31f1944b21fc1b53a7bf3974A964435418";
+const cloRPC = "https://ethereum-rpc.publicnode.com";
+const bridgeAddress = "0x9a1fc8C0369D49f3040bF49c1490E7006657ea56";
+const icoAddress = "0x425eC7cb25DE399165916A12C10a3420Cf4F5B2A";
+const vestingAddress ="0x0aE2c7aCa240a1AAc302E65A5cD648540f3B8f50";
 
 var gasPrice;
 
@@ -126,12 +136,12 @@ async function getRound() {
     const ico = new web3CLO.eth.Contract(ico_abi, icoAddress);
     const round = await ico.methods.getCurrentRound().call(); 
     //console.log(round);
-    document.getElementById("available").innerHTML = web3.utils.fromWei(round.amount) - web3.utils.fromWei(round.totalSold);
-    document.getElementById("price").innerHTML = web3.utils.fromWei(round.price);
+    document.getElementById("available").innerHTML = web3CLO.utils.fromWei(round.amount) - web3CLO.utils.fromWei(round.totalSold);
+    document.getElementById("price").innerHTML = web3CLO.utils.fromWei(round.price);
 
     // set vesting address
     if(document.getElementById("address").value == "")
-        document.getElementById("address").value = web3.eth.defaultAccount;
+        document.getElementById("address").value = web3CLO.eth.defaultAccount;
     vesting();
     return round;
 }
@@ -142,8 +152,8 @@ async function vesting() {
     const address = document.getElementById("address").value;
     const vesting = new web3CLO.eth.Contract(vesting_abi, vestingAddress);
     const vestingData = await vesting.methods.getUnlockedAmount(address).call();
-    document.getElementById("locked").innerHTML = web3.utils.fromWei(vestingData.lockedAmount);
-    document.getElementById("unlocked").innerHTML = web3.utils.fromWei(vestingData.unlockedAmount);
+    document.getElementById("locked").innerHTML = web3CLO.utils.fromWei(vestingData.lockedAmount);
+    document.getElementById("unlocked").innerHTML = web3CLO.utils.fromWei(vestingData.unlockedAmount);
     if (parseInt(vestingData.lockedAmount) == 0 && parseInt(vestingData.unlockedAmount) == 0 )  
         document.getElementById("release").innerHTML = "No tokens on vesting"
     else
@@ -221,7 +231,7 @@ async function buy(amount) {
         console.log("You should pay "+web3.utils.fromWei(value.toString())+" USDT");
 
         const usdt = new web3.eth.Contract(token_abi, chainData[chainId].usdt);
-        if(chainId == 820) // don't use bridge for Callisto chain
+        if(chainId == 1) // don't use bridge for ETH chain
         {
             const allowance = BigInt(await usdt.methods.allowance(userAddress, icoAddress).call()); // get current allowance
             if (allowance < value) {
@@ -234,6 +244,8 @@ async function buy(amount) {
         } 
         else
         {
+            alert("Only ETH chain");
+            /*
             var params = {from:  userAddress};
             if (chainId == 56) // BSC
                 params.gasPrice = gasPrice;
@@ -253,6 +265,7 @@ async function buy(amount) {
             const tx = await bridge.methods.bridgeToContract(userAddress, chainData[chainId].usdt, value.toString(), "820", icoAddress, data).send(params); 
             console.log(tx);
             setTimeout(waitBlocks,2000, tx.transactionHash, chainId, tx.blockNumber, chainData[chainId].blockConfirmations);
+            */
         }
 
         getRound();
