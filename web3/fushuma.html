@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Fushuma Multisig</title>
-  <script src="./js/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
   <style type="text/css">
     .block1 { 
      width: 200px; 
@@ -13,6 +13,31 @@
      padding-right: 5px; 
      border: solid 1px black; 
      float: right;
+    }
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: sans-serif;
+    }
+    a {
+        color: #bb86fc;
+    }
+    input, button, select {
+        background-color: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        color: #e0e0e0;
+        padding: 5px;
+        margin: 3px;
+    }
+    button {
+        cursor: pointer;
+    }
+    .block1 { 
+        width: 200px; 
+        padding: 5px;
+        padding-right: 5px; 
+        border: 1px solid #3c3c3c; 
+        float: right;
     }
   </style>
 
@@ -23,171 +48,238 @@
 
 <button type="button" id="login" onclick="login()">Connect wallet</button>
 
-<p>data: <span id="msg"></span></p>
-
-<h2>Callisto Chain</h2>
-<h3>Transfer FUMA from <a href="https://explorer.callistodao.org/address/0x688dcD65B315a1DA3F0A81B2c7d29f4aAcd2E9aB"> 0x688dcD65B315a1DA3F0A81B2c7d29f4aAcd2E9aB multisig wallet</a></h3>
-Address of receiver <input type="text" size="45" value="" id="arg0_r0"></input>, 
-Amount <input type="number" id="arg1_r0"></input>, 
-<button type="button" onclick="vote(0,2)">vote</button>
-
-<h2>Binance Smart Chain</h2>
-
-<h3>Transfer USDT from <a href="https://bscscan.com/address/0x4dCcFCb8a23836aB03B9798182384c2819df030B"> 0x4dCcFCb8a23836aB03B9798182384c2819df030B multisig wallet</a></h3>
-Address of receiver <input type="text" size="45" id="arg0_r1"></input>, 
-Amount <input type="number" id="arg1_r1"></input>, 
-<button type="button" onclick="vote(1,2)">vote</button>
-
-<h2>Ethereum Chain</h2>
-
-<h3>Transfer USDT from <a href="https://etherscan.io/address/0x8B0B0319D4Cfc08e732508C57663Fe0c50d16643"> 0x8B0B0319D4Cfc08e732508C57663Fe0c50d16643 multisig wallet</a></h3>
-Address of receiver <input type="text" size="45" id="arg0_r2"></input>, 
-Amount <input type="number" id="arg1_r2"></input>, 
-<button type="button" onclick="vote(2,2)">vote</button>
-
-
-
-
-
+<h2>Transfer</h2>
+<p>Select chain: 
+    <select id="select-chain" onchange="update_chain()">
+    </select>
+</p>
+<p>Select token:
+    <select id="select-token">
+    </select>
+</p>
+<p>Select wallet:
+    <select id="select-wallet" onchange="update_wallet()">
+    </select>
+    <span id="wallet"></span>
+</p>
+<p>
+    Address of receiver <input type="text" size="45" id="address-to"></input>,
+    Amount <input type="number" id="amount"></input>,
+    <button type="button" id="vote-button" onclick="vote()">vote</button>
+</p>
+<p id="msg"></p>
 
 <script>
 
-var params = {};
-var BN;
+var UserWallet;
+var ethersSigner;
 
-const Chain = {
-    "0x334": {
-        multisig: "0x688dcD65B315a1DA3F0A81B2c7d29f4aAcd2E9aB"
+const Chains = {
+    "121224" : {
+        name: "Fushuma",
+        explorer: "https://fumascan.com/",
+        multisigs: {
+            "0xD820A7694F276D152D5C435F0C8fb86b14752284": "Airdrop wallet",
+            "0x6ED6D85DB68b105e7729A607f4B1f1eC7A109deA": "ICO wallet",
+            "0xF8FfaD73a007f6251aC2777A97d2FA372Cd6Dcd0": "VC and Partners",
+            "0x3406A50e4c09588C5228A59fA4613531b7091e80": "Founders",
+            "0xC09ae6b9dcC5d5F66b4e3E30804677B224f2436F": "Treasury",
+        },
+        tokens: {
+            "0x0000000000000000000000000000000000000001": {
+                name: "FUMA",
+                decimals: 18,
+            }
+        },
     },
-    "0x38": {
-        multisig: "0x4dCcFCb8a23836aB03B9798182384c2819df030B"
+    "56" : {
+        name: "BSC",
+        explorer: "https://bscscan.com/",
+        multisigs: {
+            "0x4dCcFCb8a23836aB03B9798182384c2819df030B": "Treasury",
+        },
+        tokens: {
+            "0x55d398326f99059ff775485246999027b3197955": {
+                name: "USDT",
+                decimals: 18,
+            },
+            "0x0000000000000000000000000000000000000001": {
+                name: "BNB",
+                decimals: 18,
+            }
+        }
     },
-    "0x1": {
-        multisig: "0x8B0B0319D4Cfc08e732508C57663Fe0c50d16643"
-    }
+    "1" : {
+        name: "Ethereum",
+        explorer: "https://etherscan.io/",
+        multisigs: {
+            "0x8B0B0319D4Cfc08e732508C57663Fe0c50d16643": "Treasury",
+        },
+        tokens: {
+            "0xdAC17F958D2ee523a2206206994597C13D831ec7": {
+                name: "USDT",
+                decimals: 6,
+            },
+            "0x0000000000000000000000000000000000000001": {
+                name: "ETH",
+                decimals: 18,
+            }
+        }
+    },
+    "820" : {
+        name: "Callisto",
+        explorer: "https://explorer.callistodao.org/",
+        multisigs: {
+            "0x688dcD65B315a1DA3F0A81B2c7d29f4aAcd2E9aB": "Treasury",
+        },
+        tokens: {
+            "0xa062EBbdB7cC337c1379271b2fD123DFEdf7CA7E": {
+                name: "FUMA",
+                decimals: 18,
+            },
+            "0x0000000000000000000000000000000000000001": {
+                name: "CLO",
+                decimals: 18,
+            }
+        },
+    },
 };
-
-// function vote(address to, uint256 value, bytes calldata data)
-const voteFunc = {
-    name: 'vote',
-    type: 'function',
-    inputs: [{
-        type: 'address',
-        name: 'to'
-    },{
-        type: 'uint256',
-        name: 'value'
-    },{
-        type: 'bytes',
-        name: 'date'
-    }]    
-}
-
-const Rules = [
-    {
-        name: "Transfer FUMA on Callisto (to, amount)", // 0
-        chainId: "0x334",
-        address: "0xa062EBbdB7cC337c1379271b2fD123DFEdf7CA7E",
-        ABI: {
-            name: 'transfer',
-            type: 'function',
-            inputs: [{
-                type: 'address',
-                name: 'receiver'
-            },{
-                type: 'uint256',
-                name: 'value'
-            }]    
-        }
-    },
-    {
-        name: "Transfer USDT on BSC (to, amount)", // 1
-        chainId: "0x38",
-        address: "0x55d398326f99059ff775485246999027b3197955",
-        ABI: {
-            name: 'transfer',
-            type: 'function',
-            inputs: [{
-                type: 'address',
-                name: 'receiver'
-            },{
-                type: 'uint256',
-                name: 'value'
-            }]    
-        }
-    },
-    {
-        name: "Transfer USDT on ETH (to, amount)", // 2
-        chainId: "0x1",
-        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        ABI: {
-            name: 'transfer',
-            type: 'function',
-            inputs: [{
-                type: 'address',
-                name: 'receiver'
-            },{
-                type: 'uint256',
-                name: 'value'
-            }]    
-        }
-    },
-]    
+ 
 
 async function login() {
-    //clean();
-    if (typeof ethereum !== 'undefined') {
-        window.web3 = new Web3(ethereum);
-        address = await ethereum.enable()
-        web3.eth.defaultAccount = address[0];
-        console.log(web3.eth.defaultAccount);
-
-        params = {
-            from: web3.eth.defaultAccount, //addr[0]
-            value: 0,
-        };
-        BN = web3.utils.BN;
-        //token_main = new web3.eth.Contract(token_abi, token_main_addr, params);
-        document.getElementById("login").innerHTML=web3.eth.defaultAccount;
+    const connectWalletBtn = document.getElementById("login");
+    if (window.ethereum) {
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            ethersSigner = await provider.getSigner();
+            UserWallet = await ethersSigner.getAddress();
+            connectWalletBtn.textContent = UserWallet;
+            init();
+        } catch (err) {
+            console.error("Wallet connection failed:", err);
+            connectWalletBtn.textContent = "Connect wallet";
+        }
+    } else {
+        alert("MetaMask is not installed.");
     }
-    //setTimeout(update_proposals,1000);
+}
+
+function init() {
+    const selectChain = document.getElementById("select-chain");
+    const selectToken = document.getElementById("select-token");
+    const selectWallet = document.getElementById("select-wallet");
+    selectChain.innerHTML = ""; // Clear previous options
+
+    for (const chainId in Chains) {
+        const chain = Chains[chainId];
+        const option = document.createElement("option");
+        option.value = chainId;
+        option.textContent = chain.name;
+        selectChain.appendChild(option);
+    }
+    update_chain();
+}
+
+function update_chain() {
+    const selectChain = document.getElementById("select-chain");
+    const selectedChainId = selectChain.value;
+    const chain = Chains[selectedChainId];
+
+    const selectToken = document.getElementById("select-token");
+    selectToken.innerHTML = ""; // Clear previous options
+
+    for (const tokenAddress in chain.tokens) {
+        const token = chain.tokens[tokenAddress];
+        const option = document.createElement("option");
+        option.value = tokenAddress;
+        option.textContent = token.name;
+        selectToken.appendChild(option);
+    }
+
+    const selectWallet = document.getElementById("select-wallet");
+    selectWallet.innerHTML = ""; // Clear previous options
+
+    for (const multisig in chain.multisigs) {
+        const option = document.createElement("option");
+        option.value = multisig;
+        option.textContent = chain.multisigs[multisig];
+        selectWallet.appendChild(option);
+    }
+
+    update_wallet();
+}
+
+function update_wallet() {
+    const selectWallet = document.getElementById("select-wallet").value;
+    document.getElementById("wallet").innerHTML = `Selected wallet: <a href="${Chains[document.getElementById("select-chain").value].explorer}address/${selectWallet}" target="_blank">${selectWallet}</a>`;
+}
+
+function explorer() {
+    const selectChain = document.getElementById("select-chain");
+    const selectedChainId = selectChain.value;
+    const chain = Chains[selectedChainId];
+    const selectedWallet = document.getElementById("select-wallet").value;
+    window.open(chain.explorer + "address/" + selectedWallet, "_blank");
 }
 
 // if args use as is.
-async function vote(ruleId, argsNum) {
-    var i = 0;
-    var val = [];
-    while (i<argsNum) {
-        let el = document.getElementById("arg"+i+"_r"+ruleId);
-        var value = el.value;
-        if (el.type == "number") {
-            value = web3.utils.toWei(value.toString());
-            
-            // reduce decimals by 12 for USDT on ETH
-            if (ruleId == 2) {
-                value = value.slice(0, -12); // Remove the last 12 symbols
-                console.log(value);
-            }
+async function vote() {
+    const multisigABI = [
+        "function vote(address to, uint256 value, bytes calldata data)"
+    ];
+    const tokenABI = [
+        "function transfer(address to, uint256 value)"
+    ];
+    const selectedChainId = document.getElementById("select-chain").value;
+    const chain = Chains[selectedChainId];
+    // check if chainId is active in metamask
+    if (window.ethereum) {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (parseInt(chainId) !== parseInt(selectedChainId)) {
+            alert("Please switch to the correct network in your wallet.");
+            return;
         }
-        val.push(value);
-        i++;
-    }
-    //console.log(val, Rules[ruleId]);
-    var args  = web3.eth.abi.encodeFunctionCall(Rules[ruleId].ABI, val);
-    //var args = encodeArgs(Rules[ruleId].ABI, val);
-    //console.log(args);
-    var data = web3.eth.abi.encodeFunctionCall(voteFunc,[Rules[ruleId].address,"0",args]);
-    console.log(data);
-    document.getElementById("msg").innerHTML = data;
-    const chainId = Rules[ruleId].chainId;
-    if (web3.eth.currentProvider.chainId != chainId) {
-        alert("Switch chain");
+    } else {
+        alert("MetaMask is not installed.");
         return;
     }
-    const contract = Chain[chainId].multisig;
 
-    let send = web3.eth.sendTransaction({from:web3.eth.defaultAccount,to:contract, value:0, data: data});
-    console.log(send);
+    const selectedToken = document.getElementById("select-token").value;
+    const selectedWallet = document.getElementById("select-wallet").value;
+    const amount = document.getElementById("amount").value;
+    const addressTo = document.getElementById("address-to").value;
+
+    if (amount == "" || amount <= 0) {
+        alert("Amount is zero");
+        return;
+    }
+    if (addressTo == "") {
+        alert("Address is empty");
+        return;
+    }
+    
+
+    const tokenDecimals = chain.tokens[selectedToken].decimals;
+    const tokenAmount = ethers.parseUnits(amount, tokenDecimals);
+    const multisigContract = new ethers.Contract(selectedWallet, multisigABI, ethersSigner);
+
+    try {
+        if (selectedToken == "0x0000000000000000000000000000000000000001") {
+            const tx = await multisigContract.vote(addressTo, tokenAmount, "0x");
+            console.log("Transaction sent:", tx);
+            document.getElementById("msg").textContent = "TX: "+tx.hash;
+        } else {
+            const tokenContract = new ethers.Contract(selectedToken, tokenABI, ethersSigner);
+            const data = tokenContract.interface.encodeFunctionData("transfer", [addressTo, tokenAmount]);
+            const tx = await multisigContract.vote(selectedToken, 0, data);
+            console.log("Transaction sent:", tx);
+            document.getElementById("msg").textContent = "TX: "+tx.hash;
+        }
+    } catch (error) {
+        console.error("Transaction failed:", error);
+        document.getElementById("msg").textContent = "Transaction failed: " + error.reason;
+    }        
 }
 
 </script>
