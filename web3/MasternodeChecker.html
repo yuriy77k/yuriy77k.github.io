@@ -11,12 +11,21 @@
     const web3 = new Web3("https://rpc.callistodao.org/");
     //deposit transaction
     const txs = [
-      "auth?tx=0xc3d7d46abb87873550b817f4e7e0fb3c1d26498e7f7a7e0f23c2845c0beccbb3&chain=56",
-      "auth?tx=0x3a9c815437130048bc9ce3f79ee58f7445bf1cbd3e3510d3d7be5cdae29d9db1&chain=820",
-      "auth?tx=0x86aaa6b779eb60b72be0a8ab2a160dde88d98f6dcc88b8252801b12f45eff3b1&chain=1",
-      "auth?tx=0x103f049fd26fb452b763e718faefe621b6ebe5d3ee647fde74e5dc05afd06652&chain=61",
-      "auth?tx=0x0e5f34a67d1d0de1e35b337cb6aa7824d63052e8f2e55eec78e26f01b567d0a3&chain=199",      
-      "auth?tx=0xcee67fdf6bcf1993d3838c7be99df9455a9c09e0d55200ec9102ac2d93425a67&chain=137",      
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=121224",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=1",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=56",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=8453",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=42161",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=137",
+      "addToken?token=0x0000000000000000000000000000000000000001&chain=130",
+      "addToken?token=0xdAC17F958D2ee523a2206206994597C13D831ec7&chain=1",
+      "addToken?token=0x55d398326f99059fF775485246999027B3197955&chain=56",
+      //"auth?tx=0xc3d7d46abb87873550b817f4e7e0fb3c1d26498e7f7a7e0f23c2845c0beccbb3&chain=56",
+      //"auth?tx=0x3a9c815437130048bc9ce3f79ee58f7445bf1cbd3e3510d3d7be5cdae29d9db1&chain=820",
+      //"auth?tx=0x86aaa6b779eb60b72be0a8ab2a160dde88d98f6dcc88b8252801b12f45eff3b1&chain=1",
+      //"auth?tx=0x103f049fd26fb452b763e718faefe621b6ebe5d3ee647fde74e5dc05afd06652&chain=61",
+      //"auth?tx=0x0e5f34a67d1d0de1e35b337cb6aa7824d63052e8f2e55eec78e26f01b567d0a3&chain=199",      
+      //"auth?tx=0xcee67fdf6bcf1993d3838c7be99df9455a9c09e0d55200ec9102ac2d93425a67&chain=137",      
     ];
 
     async function check() {
@@ -36,11 +45,23 @@
           alert("ERROR: authorization failed!");
           return; 
         }
-        var searchParams = new URLSearchParams(txs[i].substring(5));
-        var txId = searchParams.get("tx");
-        var chain = searchParams.get("chain");
+        var messageHash;
+        if (txs[i].substring(0, 3) == "add") {
+          //addToken transaction
+          var searchParams = new URLSearchParams(txs[i].substring(9));
+          var token = searchParams.get("token");
+          var chain = searchParams.get("chain");
+          //[token, chainId, decimals, name, symbol]
+          messageHash = web3.utils.soliditySha3(token, chain, respJSON.decimals, respJSON.name, respJSON.symbol);
+        } else {
+          // auth deposit
+          var searchParams = new URLSearchParams(txs[i].substring(5));
+          var txId = searchParams.get("tx");
+          var chain = searchParams.get("chain");
+          //p.originalToken, p.originalChainID, p.receiver, p.value, txId, fromChainId, p.toChainId, toBridge
+          messageHash = web3.utils.soliditySha3(respJSON.originalToken, respJSON.originalChainID, respJSON.receiver, respJSON.value, txId, chain, respJSON.chainId, respJSON.toBridge);
+        }
 
-        var messageHash = web3.utils.soliditySha3(respJSON.token, respJSON.to, respJSON.value, txId, chain, respJSON.chainId);
         var addr = web3.eth.accounts.recover(messageHash, respJSON.signature);
         console.log(addr+" chain: "+chain);
         if (i == 0) address = addr;
