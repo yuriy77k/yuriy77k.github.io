@@ -53,19 +53,25 @@
     <select id="select-chain" onchange="update_chain()">
     </select>
 </p>
-<p>Select token:
-    <select id="select-token">
-    </select>
-</p>
 <p>Select wallet:
     <select id="select-wallet" onchange="update_wallet()">
     </select>
     <span id="wallet"></span>
 </p>
+<p>Select token:
+    <select id="select-token">
+    </select>
+</p>
 <p>
     Address of receiver <input type="text" size="45" id="address-to"></input>,
     Amount <input type="number" id="amount"></input>,
     <button type="button" id="vote-button" onclick="vote()">vote</button>
+</p>
+<h2>Bridge</h2>
+<p>
+    New bridge address <input type="text" size="45" id="upgrade-to"></input>,
+    <button type="button" onclick="upgrade(0)">request vote</button>
+    <button type="button" onclick="upgrade(1)">upgrade vote</button>
 </p>
 <p id="msg"></p>
 
@@ -84,6 +90,7 @@ const Chains = {
             "0xF8FfaD73a007f6251aC2777A97d2FA372Cd6Dcd0": "VC and Partners",
             "0x3406A50e4c09588C5228A59fA4613531b7091e80": "Founders",
             "0xC09ae6b9dcC5d5F66b4e3E30804677B224f2436F": "Treasury",
+            "0x4fE48F0a718B00A553f9b8e78E793c522c374b45": "Bridge Owner",
         },
         tokens: {
             "0x0000000000000000000000000000000000000001": {
@@ -221,6 +228,35 @@ function explorer() {
     const chain = Chains[selectedChainId];
     const selectedWallet = document.getElementById("select-wallet").value;
     window.open(chain.explorer + "address/" + selectedWallet, "_blank");
+}
+
+async function upgrade(upg) {
+    const multisigABI = [
+        "function vote(address to, uint256 value, bytes calldata data)"
+    ];
+    const bridgeABI = [
+        "function requestUpgrade(address newBridge)",
+        "function upgrade()",
+    ];
+    const bridgeAddress = "0x7304ac11BE92A013dA2a8a9D77330eA5C1531462";
+    const wallet = "0x4fE48F0a718B00A553f9b8e78E793c522c374b45"; // Bridge Owner
+    const upgradeTo = document.getElementById("upgrade-to").value;
+    if (upgradeTo == "") {
+        alert("Address is empty");
+        return;
+    }
+    const multisigContract = new ethers.Contract(wallet, multisigABI, ethersSigner);
+    const bridgeContract = new ethers.Contract(bridgeAddress, bridgeABI, ethersSigner);
+    var tx;
+    if (upg == 0) {
+        const data = bridgeContract.interface.encodeFunctionData("requestUpgrade", [upgradeTo]);
+        tx = await multisigContract.vote(bridgeAddress, 0, data);
+    } else {
+        const data = bridgeContract.interface.encodeFunctionData("upgrade", []);
+        tx = await multisigContract.vote(bridgeAddress, 0, data);
+    }
+    console.log("Transaction sent:", tx);
+    document.getElementById("msg").textContent = "TX: "+tx.hash;    
 }
 
 // if args use as is.
