@@ -247,7 +247,7 @@ async function upgrade(upg) {
     ];
     const bridgeAddress = "0x7304ac11BE92A013dA2a8a9D77330eA5C1531462";
     const wallet = "0x4fE48F0a718B00A553f9b8e78E793c522c374b45"; // Bridge Owner
-    const upgradeTo = document.getElementById("upgrade-to").value;
+    const upgradeTo = document.getElementById("upgrade-to").value.trim();
     if (upgradeTo == "") {
         alert("Address is empty");
         return;
@@ -255,15 +255,20 @@ async function upgrade(upg) {
     const multisigContract = new ethers.Contract(wallet, multisigABI, ethersSigner);
     const bridgeContract = new ethers.Contract(bridgeAddress, bridgeABI, ethersSigner);
     var tx;
-    if (upg == 0) {
-        const data = bridgeContract.interface.encodeFunctionData("requestUpgrade", [upgradeTo]);
-        tx = await multisigContract.vote(bridgeAddress, 0, data);
-    } else {
-        const data = bridgeContract.interface.encodeFunctionData("upgrade", []);
-        tx = await multisigContract.vote(bridgeAddress, 0, data);
+    try {
+        if (upg == 0) {
+            const data = bridgeContract.interface.encodeFunctionData("requestUpgrade", [upgradeTo]);
+            tx = await multisigContract.vote(bridgeAddress, 0, data);
+        } else {
+            const data = bridgeContract.interface.encodeFunctionData("upgrade", []);
+            tx = await multisigContract.vote(bridgeAddress, 0, data);
+        }
+        console.log("Transaction sent:", tx);
+        document.getElementById("msg").textContent = "TX: "+tx.hash;            
+    } catch (error) {
+        console.error("Transaction failed:", error);
+        document.getElementById("msg").textContent = "Transaction failed: " + error.reason;
     }
-    console.log("Transaction sent:", tx);
-    document.getElementById("msg").textContent = "TX: "+tx.hash;    
 }
 
 // if args use as is.
