@@ -283,11 +283,13 @@ async function vote() {
     const chain = Chains[selectedChainId];
     // check if chainId is active in metamask
     if (window.ethereum) {
+        /*
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         if (parseInt(chainId) !== parseInt(selectedChainId)) {
             alert("Please switch to the correct network in your wallet.");
             return;
-        }
+        }*/
+       await switchToChain(selectedChainId);
     } else {
         alert("MetaMask is not installed.");
         return;
@@ -328,6 +330,24 @@ async function vote() {
         console.error("Transaction failed:", error);
         document.getElementById("msg").textContent = "Transaction failed: " + error.reason;
     }        
+}
+
+async function switchToChain(c) {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            const chain = parseInt(c);
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: "0x" + chain.toString(16) }],
+            });
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                // You can make a request to add the chain to wallet here
+                console.log("Chain hasn't been added to the wallet!")
+                showError("Chain hasn't been added to the wallet!");
+            }
+        }
+    }
 }
 
 </script>
